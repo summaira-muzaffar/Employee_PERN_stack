@@ -1,0 +1,25 @@
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      target: build
+    command: ["npm", "run", "server"]
+    entrypoint: []
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      target: build
+    environment:
+      VITE_PROXY_TARGET: http://backend:4000
+    command: ["npm", "run", "dev", "--", "--host"]
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules

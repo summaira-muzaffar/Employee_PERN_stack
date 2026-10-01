@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model employee_details {
+  id     Int       @id @default(autoincrement())
+  name   String    @db.VarChar(50)
+  email  String    @unique @db.VarChar(50)
+  age    Int       @db.SmallInt
+  role   role_type @default(Intern)
+  salary Decimal   @db.Decimal(8, 2)
+}
+
+enum role_type {
+  Developer
+  Manager
+  Sales
+  Admin
+  Intern
+}
