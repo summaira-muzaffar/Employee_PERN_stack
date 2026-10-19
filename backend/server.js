@@ -1,19 +1,20 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
+
+// Aapke custom Prisma output ka path
+const { PrismaClient } = require('./generated/prisma'); 
 
 const app = express();
 const prisma = new PrismaClient();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// --- GET ALL EMPLOYEES ---
+// GET ALL
 app.get('/api/employee', async (req, res) => {
   try {
-    const employees = await prisma.employee.findMany();
+    const employees = await prisma.employee_details.findMany();
     res.json(employees);
   } catch (error) {
     console.error(error);
@@ -21,19 +22,16 @@ app.get('/api/employee', async (req, res) => {
   }
 });
 
-// --- SEARCH EMPLOYEES (Matches your frontend call) ---
+// SEARCH
 app.get('/api/employee/search', async (req, res) => {
   try {
     const { q } = req.query;
-    
-    // If no search query, return all
     if (!q) {
-      const allEmployees = await prisma.employee.findMany();
+      const allEmployees = await prisma.employee_details.findMany();
       return res.json(allEmployees);
     }
 
-    // Search by name OR email (case-insensitive)
-    const employees = await prisma.employee.findMany({
+    const employees = await prisma.employee_details.findMany({
       where: {
         OR: [
           { name: { contains: q, mode: 'insensitive' } },
@@ -41,7 +39,6 @@ app.get('/api/employee/search', async (req, res) => {
         ]
       }
     });
-    
     res.json(employees);
   } catch (error) {
     console.error(error);
@@ -49,43 +46,41 @@ app.get('/api/employee/search', async (req, res) => {
   }
 });
 
-// --- ADD A NEW EMPLOYEE ---
+// ADD
 app.post('/api/employee', async (req, res) => {
   try {
-    const { name, email, position, salary } = req.body; // Adjust these to match your Prisma schema
-    
-    const newEmployee = await prisma.employee.create({
+    const { name, email, age, role, salary } = req.body; 
+    const newEmployee = await prisma.employee_details.create({
       data: {
         name,
         email,
-        position,
-        salary: parseFloat(salary) // Ensure salary is a number if your DB requires it
+        age: parseInt(age),
+        role,
+        salary: parseFloat(salary)
       }
     });
-    
     res.status(201).json(newEmployee);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to create employee' });
+    res.status(500).json({ error: 'Failed to create employee. Check unique email or valid role.' });
   }
 });
 
-// --- UPDATE AN EMPLOYEE ---
+// UPDATE
 app.put('/api/employee/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, position, salary } = req.body;
-    
-    const updatedEmployee = await prisma.employee.update({
+    const { name, email, age, role, salary } = req.body;
+    const updatedEmployee = await prisma.employee_details.update({
       where: { id: parseInt(id) },
       data: {
         name,
         email,
-        position,
+        age: parseInt(age),
+        role,
         salary: parseFloat(salary)
       }
     });
-    
     res.json(updatedEmployee);
   } catch (error) {
     console.error(error);
@@ -93,15 +88,13 @@ app.put('/api/employee/:id', async (req, res) => {
   }
 });
 
-// --- DELETE AN EMPLOYEE ---
+// DELETE
 app.delete('/api/employee/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    await prisma.employee.delete({
+    await prisma.employee_details.delete({
       where: { id: parseInt(id) }
     });
-    
     res.json({ message: 'Employee deleted successfully' });
   } catch (error) {
     console.error(error);
@@ -109,7 +102,7 @@ app.delete('/api/employee/:id', async (req, res) => {
   }
 });
 
-// Start server locally
+// Local server start
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 4000;
   app.listen(PORT, () => {
@@ -117,5 +110,5 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// CRITICAL: Export for Vercel
+// Vercel ke liye export (Zaroori hai)
 module.exports = app;
