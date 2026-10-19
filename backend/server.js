@@ -1,38 +1,52 @@
-import express from 'express';
-import bodyParser from 'body-parser';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import employeeRoute from "./routes/employeeRoutes.js"
-import { connectDB } from "./utils/prismaClient.js"
-dotenv.config();
+const express = require('express');
+const cors = require('cors');
+const { PrismaClient } = require('@prisma/client');
 
 const app = express();
+const prisma = new PrismaClient();
 
-const port = 4000;
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-const corsOptions = {
-    origin: "http://localhost:5173",
-};
+// --- YOUR ROUTES GO HERE ---
+// IMPORTANT: Always start routes with '/api' so Vercel knows to send them to the backend
 
-app.use(cors(corsOptions));
-
-app.use(bodyParser.json());
-
-app.use("/api/employee", employeeRoute)
-
-app.use((err, req, res, next) => {
-    const statusCode = err.statusCode || 500;
-    const message = err.message || "Internal server error";
-
-    return res.status(statusCode).json({ error: message });
+// Example GET route
+app.get('/api/employees', async (req, res) => {
+  try {
+    const employees = await prisma.employee.findMany();
+    res.json(employees);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch employees' });
+  }
 });
 
-app.get("/", (req, res) => {
-    res.send("API Working");
-});
-
-connectDB().then(() => {
-        app.listen(port, () => {
-        console.log("Server started on port: " + port);
+// Example POST route
+app.post('/api/employees', async (req, res) => {
+  const { name, role } = req.body;
+  try {
+    const newEmployee = await prisma.employee.create({
+      data: { name, role }
     });
+    res.status(201).json(newEmployee);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create employee' });
+  }
 });
+
+// Health check route
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'Backend is running!' });
+});
+
+// Start server (Vercel will handle this in production)
+const PORT = process.env.PORT || 5000;
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+// Export for Vercel
+module.exports = app;
