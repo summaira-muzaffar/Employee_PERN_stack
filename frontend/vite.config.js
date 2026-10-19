@@ -1,14 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // This makes local development work without CORS issues
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:4000', // Backend port 4000 par chal raha hai
         changeOrigin: true,
       }
     }
