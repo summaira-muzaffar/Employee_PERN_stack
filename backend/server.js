@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
+
 const cors = require('cors');
 
-// Aapke custom Prisma output ka path
-const { PrismaClient } = require('./generated/prisma'); 
+const { PrismaClient } = require('@prisma/client');
 
 const app = express();
 const prisma = new PrismaClient();
